@@ -1,31 +1,39 @@
+import java.io.File
+
 import com.typesafe.sbt.packager.docker.Cmd
+import sbt.Keys.name
 
-name := "config-experiment"
+lazy val mainProject = (project in file("."))
+  .settings(settings)
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
 
-version := "0.1"
+lazy val settings = generalSettings ++ dockerSettings
 
-scalaVersion := "2.12.8"
-
-libraryDependencies += "com.typesafe" % "config" % "1.3.2"
-
-lazy val projectd = (project in file("."))
-    .settings(settings).enablePlugins(DockerPlugin)
-
-lazy val settings = dockerSettings
+lazy val generalSettings = Seq(
+  name := appName,
+  version := "0.1",
+  scalaVersion := "2.12.8",
+  libraryDependencies += "com.typesafe" % "config" % "1.3.2",
+  mainClass in Compile := Some("Main")
+)
 
 lazy val dockerSettings = Seq(
   dockerBaseImage := "frolvlad/alpine-oraclejdk8:8.181.13-slim",
-  packageName in Docker := "config-tester",
+  packageName in Docker := appName,
   version in Docker := version.value,
   dockerRepository := Some("gcr.io/commercetools-platform"),
   dockerUpdateLatest := false,
-  dockerExposedVolumes := Seq(s"/etc/config-tester/"),
+  dockerExposedVolumes := Seq(configFolder),
+  dockerPackageMappings in Docker ++= Seq((new File((resourceDirectory in Compile).value, configFile), s"$configFolder/$configFile")),
   dockerCommands :=
-    Seq(
-      dockerCommands.value.head,
-      Cmd("RUN apk add --update bash && rm -rf /var/cache/apk/*")) ++
-      dockerCommands.value.tail,
-  dockerCommands += Cmd("ADD", s"etc/config-tester /etc/config-tester"))
+    dockerCommands.value.head :: Cmd("RUN apk add --update bash && rm -rf /var/cache/apk/*") :: Nil ++ dockerCommands.value.tail ++ (Cmd("ADD", s"$configFolderNoSlash $configFolder") :: Nil)
+)
 
-//val processJvmSettings = Seq(
-//  packageJvmOpts := Seq("-server", "-Dconfig.file=config/environment.conf"))
+lazy val processJvmSettings = Seq(
+  s"-Dconfig.file=$configFolder/$configFile"
+)
+
+lazy val appName = "config-tester"
+lazy val configFolder = s"/etc/$appName"
+lazy val configFolderNoSlash= s"etc/$appName"
+lazy val configFile = "application.conf"
