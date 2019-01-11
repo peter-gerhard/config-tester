@@ -24,16 +24,15 @@ lazy val dockerSettings = Seq(
   dockerRepository := Some("gcr.io/commercetools-platform"),
   dockerUpdateLatest := false,
   dockerExposedVolumes := Seq(configFolder),
+  dockerEnvVars := Map(
+    "JAVA_OPTS" → s"-Dconfig.file=$configFolder/$configFile"
+  ),
   dockerPackageMappings in Docker ++= Seq((new File((resourceDirectory in Compile).value, configFile), s"$configFolder/$configFile")),
   dockerCommands :=
-    dockerCommands.value.head :: Cmd("RUN apk add --update bash && rm -rf /var/cache/apk/*") :: Nil ++ dockerCommands.value.tail ++ (Cmd("ADD", s"$configFolderNoSlash $configFolder") :: Nil)
+    dockerCommands.value.head :: Cmd("RUN apk add --update bash && rm -rf /var/cache/apk/*") :: Nil ++ dockerCommands.value.tail ++ (Cmd("ADD", s"$configFolder $configFolder") :: Nil)
 )
 
-lazy val processJvmSettings = Seq(
-  s"-Dconfig.file=$configFolder/$configFile"
-)
 
 lazy val appName = "config-tester"
 lazy val configFolder = s"/etc/$appName"
-lazy val configFolderNoSlash= s"etc/$appName"
 lazy val configFile = "application.conf"
