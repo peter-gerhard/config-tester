@@ -1,0 +1,10 @@
+authWs:
+  appName: auth-ws
+  environment: nonsense
+
+
+common:
+  predefinedAppName: nonsense
+  environment: staging
+  memorySpecificJavaOpts: >-
+    -XX:MaxRAMFraction=2
