@@ -45,3 +45,4 @@ If you check the output for the pod you should see
  c: global_c       # fallback value from global.conf
  secret: a1234     # value taken from env var which in turn was taken from kubernetes secret
 ```
+
